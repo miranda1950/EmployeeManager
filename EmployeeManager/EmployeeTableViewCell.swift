@@ -13,15 +13,13 @@ class EmployeeTableViewCell: UITableViewCell {
     var employee: Employee? {
         didSet {
             guard let employee = employee else { return }
-            firstNameLabel.text = employee.firstName
-            lastNameLabel.text = employee.lastName
-            oibLabel.text = String(employee.id)
-            if let image = UIImage(data: employee.employeeImage) {
-                employeeImage.image = image
-            } else {
-                
-                print("Failed to create UIImage from Data")
-            }
+            firstNameLabel.text = employee.name
+            lastNameLabel.text = employee.surname
+            let formatter = DateFormatter()
+            formatter.dateStyle = .short
+            employeeImage.image = UIImage(systemName: "person")
+            
+            
         }
     }
     
@@ -64,12 +62,12 @@ class EmployeeTableViewCell: UITableViewCell {
         return lastNameLabel
     }()
     
-    private lazy var oibLabel: UILabel = {
-        let oibLabel = UILabel()
-        oibLabel.numberOfLines = 1
-        oibLabel.style( color: .darkRed, alignment: .right)
-        containerView.addSubview(oibLabel)
-        return oibLabel
+    private lazy var startDateLabel: UILabel = {
+        let startDateLabel = UILabel()
+        startDateLabel.numberOfLines = 1
+        startDateLabel.style( color: .darkRed, alignment: .right)
+        containerView.addSubview(startDateLabel)
+        return startDateLabel
     }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -94,7 +92,7 @@ class EmployeeTableViewCell: UITableViewCell {
         lastNameLabel.anchor(top: (firstNameLabel.bottomAnchor, 8), leading: (employeeImage.trailingAnchor, 8), trailing: (containerView.trailingAnchor, 12))
 
         
-        oibLabel.anchor(bottom: (containerView.bottomAnchor, 8),leading: (employeeImage.trailingAnchor, 8), trailing: (containerView.trailingAnchor, 8))
+        startDateLabel.anchor(bottom: (containerView.bottomAnchor, 8),leading: (employeeImage.trailingAnchor, 8), trailing: (containerView.trailingAnchor, 8))
         
     }
 }

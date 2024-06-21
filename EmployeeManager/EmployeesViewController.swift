@@ -16,19 +16,19 @@ final class EmployeesViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-      
-        viewModel.connectToDatabase()
-        viewModel.createTable()
-        
+     
+        viewModel.loadData()
         setupConstraints()
+        setupCallbacks()
     }
     
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         
-        viewModel.loadDataFromSQLiteDatabase()
-        tableView.reloadData()
+
+        viewModel.loadData()
+        
     }
     
     private lazy var titleLabel: UILabel = {
@@ -70,6 +70,12 @@ final class EmployeesViewController: UIViewController {
 
 extension EmployeesViewController {
     
+    private func setupCallbacks() {
+        viewModel.onGotData = { [weak self] in
+            self?.tableView.reloadData()
+        }
+    }
+    
     private func setupConstraints() {
         
         
@@ -106,30 +112,23 @@ extension EmployeesViewController: UITableViewDelegate, UITableViewDataSource {
         
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        viewModel.onGoToDetails?(viewModel.employees[indexPath.row])
-    }
-    
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let employee = self.viewModel.employees[indexPath.row]
-      let deleteItem = UIContextualAction(style: .destructive, title: "Delete") {  (contextualAction, view, boolValue) in
-          
-          
-          
-          self.viewModel.deleteFromDatabase(employee.id)
-          
-          self.viewModel.loadDataFromSQLiteDatabase()
-          self.tableView.reloadData()
-      }
-        
-        let editItem = UIContextualAction(style: .normal, title: "Edit") {  (contextualAction, view, boolValue) in
-            self.viewModel.onGoToEdit?(employee)
-        }
-      let swipeActions = UISwipeActionsConfiguration(actions: [deleteItem, editItem])
+            let employee = self.viewModel.employees[indexPath.row]
+          let deleteItem = UIContextualAction(style: .destructive, title: "Delete") {  (contextualAction, view, boolValue) in
+              
+              
+              
+              self.viewModel.deleteFromDatabase(employee)
+              self.viewModel.employees.remove(at: indexPath.row)
+              tableView.deleteRows(at: [indexPath], with: .automatic)
+              self.tableView.reloadData()
+          }
+            
+          let swipeActions = UISwipeActionsConfiguration(actions: [deleteItem])
 
-      return swipeActions
-  }
+          return swipeActions
+      }
+    
 }
 
 extension EmployeesViewController: UISearchBarDelegate {
@@ -144,25 +143,9 @@ extension EmployeesViewController: UISearchBarDelegate {
         
         viewModel.queryText = query.lowercased()
        
-        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(self.loadData(_:)), object: searchBar)
-        self.perform(#selector(self.loadData(_:)), with: searchBar, afterDelay: 0.5)
        
     }
     
-    @objc private func loadData(_ searchBar: UISearchBar) {
-      
-        guard let query = searchBar.text?.trimmingCharacters(in: .whitespaces), !query.isEmpty else {
-               viewModel.loadDataFromSQLiteDatabase()
-               tableView.reloadData()
-              
-               return
-           }
-        viewModel.queryText = query.lowercased()
-      
-        viewModel.searchEmployee(viewModel.queryText)
-        
-        tableView.reloadData()
-    }
     
     
     

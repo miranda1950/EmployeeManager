@@ -10,34 +10,37 @@ import UIKit
 final class EmployeesViewModel {
     
     var employees: [Employee] = []
-    var onGoToEdit: ((Employee)-> Void)?
     var onGoToDetails: ((Employee)-> Void)?
-    
+    var onGotData: EmptyCallback?
     
     var queryText: String = ""
+    private let databaseService: DatabaseServiceProtocol
     
-    
-    func connectToDatabase() {
-        _ = SQLiteDatabase.sharedInstance
+    init(databaseService: DatabaseServiceProtocol) {
+        self.databaseService = databaseService
     }
     
-     func createTable() {
-        let database = SQLiteDatabase.sharedInstance
-        database.createTable()
-    }
+}
+
+
+extension EmployeesViewModel {
     
-    func loadDataFromSQLiteDatabase() {
-        employees = SQLiteCommands.presentRows() ?? []
-    }
-    
-    func deleteFromDatabase(_ employeeID: Int) {
-        SQLiteCommands.deleteRow(employeeID: employeeID)
-    }
-    
-    func searchEmployee(_ query: String) {
+    func loadData() {
         
-        employees = SQLiteCommands.findEmployees(withLastNameContaining: query) ?? []
-        
+        databaseService.fetchEmployees { [weak self] result in
+            switch result {
+            case .success(let data):
+                self?.employees = data ?? []
+                self?.onGotData?()
+            case .failure(let error):
+                print("miranerror\(error)")
+            }
+        }
     }
     
+    func deleteFromDatabase(_ employee: Employee) {
+        
+        databaseService.deleteEmployee(employee: employee)
+        onGotData?()
+    }
 }

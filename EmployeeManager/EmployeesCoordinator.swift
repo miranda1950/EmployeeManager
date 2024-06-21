@@ -22,18 +22,14 @@ final class EmployeesCoordinator: Coordinator {
 extension EmployeesCoordinator {
     
     private func showEmployees() -> UIViewController {
-        let vm = EmployeesViewModel()
+        let vm = EmployeesViewModel(databaseService: ServiceFactory.databaseService)
         let vc = EmployeesViewController()
         vc.viewModel = vm
         
         
         vc.tabBarItem = UITabBarItem(title: "Employees", image:UIImage(systemName: "person.3"), selectedImage: UIImage(systemName: "person.3.fill"))
         
-        vm.onGoToEdit = { [weak self] employee in
-            
-            self?.goToEdit(employee)
-        }
-        
+      
         vm.onGoToDetails = { [weak self] employee in
             
             self?.goToDetails(employee)
@@ -44,28 +40,8 @@ extension EmployeesCoordinator {
         
     }
     
-    
-    private func goToEdit(_ employee: Employee) {
-        
-        let vm = EditEmployeeViewModel(employee: employee)
-        let vc = UIHostingController(rootView: EditEmployeeView(viewModel: vm))
-        
-        
-        vm.onDismissed = { [weak self] in
-            
-            self?.navigationController.popViewController(animated: true)
-        }
-        navigationController.pushViewController(vc, animated: true)
-    }
-    
-    
     private func goToDetails(_ employee: Employee) {
         
-        let vm = DetailsViewModel(employee: employee)
-        let vc = DetailsViewController()
-        vc.viewModel = vm
-        
-        navigationController.pushViewController(vc, animated: true)
     }
     
 }

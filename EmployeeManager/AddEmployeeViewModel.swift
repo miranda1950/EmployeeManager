@@ -11,81 +11,111 @@ import PhotosUI
 
 final class AddEmployeeViewModel: ObservableObject {
     
+    
     @Published var firstName: String = ""
     @Published var lastName: String = ""
     
     @Published  var selectedGender: String = "M"
-    let genders = ["M","F","X"]
-    @Published var oib: Int = 1
-    
-    @Published  var birthDate = Date.now
-    @Published var age: Int = 25
-    
-    @Published  var typeOfContract: String = "Neodređeno"
-    let conracts = ["Neodređeno","Određeno"]
-    
+    let genders = ["M","F"]
     
     @Published  var startDate = Date.now
+    @Published  var hours: String = ""
+    @Published var minutes: String = ""
     
-    @Published var yearsOfContract: Int = 1
-    
-    @Published var department: String = ""
-    
-    @Published var vaccationDays: Int = 20
-    @Published var freeDays: Int = 1
-    @Published var paidLeave: Int = 1
     
     @Published  var showingAlert = false
+    @Published var errorTitle = ""
     @Published var errorMessage = ""
     
     @Published var uiImage: UIImage? = nil
     @Published var imageSelection: PhotosPickerItem? = nil
+    
+    var onGotResponse: ((UserData) -> Void)?
+    
+    private let employeeService: EmployeeServiceProtocol
+    private let databaseService: DatabaseServiceProtocol
+    
+    init(employeeService: EmployeeServiceProtocol, databaseService: DatabaseServiceProtocol) {
+        self.employeeService = employeeService
+        self.databaseService = databaseService
+    }
 }
 
 extension AddEmployeeViewModel {
     
-    func checkValidityOfInputs() -> Bool {
+    func checkValidity() {
         
-        return !firstName.isEmpty && !lastName.isEmpty && !String(oib).isEmpty
-    }
-    
-    func saveEmployeeToDatabase() {
-        
-        guard let photo = uiImage?.pngData() else {
+        guard !firstName.isEmpty && !lastName.isEmpty  else {
+            showingAlert = true
+            errorTitle = "Invalid Name"
+            errorMessage = "Please check if the inputs are valid"
             return
         }
         
+        guard checkHoursValidity() else {
+            showingAlert = true
+            errorTitle = "Invalid Hours"
+            errorMessage = "Please check if the hour value is valid"
+            return
+        }
         
+        guard checkMinutesValidity() else {
+            showingAlert = true
+            errorTitle = "Invalid Minutes"
+            errorMessage = "Please check if the minute value is valid"
+            return
+        }
         
-        let employeeValues = Employee(id: oib, firstName: firstName, lastName: lastName, age: age, gender: selectedGender, birthDate: birthDate, startDate: startDate, typeOfContract: typeOfContract, yearsOfContract: yearsOfContract, department: department, vaccationDays: vaccationDays, freeDays: freeDays, paidLeave: paidLeave, employeeImage: photo)
-        
-        createNewEmployee(employeeValues)
+        saveEmployee()
     }
     
-    func createNewEmployee(_ employeeValue: Employee) {
+    private func checkHoursValidity() -> Bool {
         
-        let employeeAddedToTable = SQLiteCommands.insertRow(employeeValue)
+        return !hours.isEmpty && (0...23).contains(Int(hours) ?? 0)
+    }
+    
+    private func checkMinutesValidity() -> Bool {
         
-        if employeeAddedToTable == true && checkValidityOfInputs() == true {
-            print("Employee added")
-            resetForm()
-        } else {
-            print("Employee not added")
-            errorMessage = "Please check if You correctly added first name, last name and OIB"
-            showingAlert = true
+        return !minutes.isEmpty && (0...59).contains(Int(minutes) ?? 0)
+    }
+    
+    private func saveEmployee() {
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let stringDate = formatter.string(from: startDate)
+        
+        
+        employeeService.sendEmployeeData(firstName: firstName, lastName: lastName, date: stringDate, gender: selectedGender, hours: hours, minutes: minutes) { [weak self] result in
+            switch result {
+            case .success(let value):
+                self?.saveEmployeeToDatabase(value.algorithm.userData)
+                self?.onGotResponse?(value.algorithm.userData)
+                self?.resetForm()
+            case .failure(let error):
+                print("error\(error)")
+                self?.showingAlert = true
+                self?.errorTitle = "API Error"
+                self?.errorMessage = "There was a problem with sending request to API"
+                
+            }
         }
+    }
+    
+    private func saveEmployeeToDatabase(_ employee: UserData) {
+        
+        let newEmployee = Employee(name: employee.name, surname: employee.surname, sex: employee.gender)
+        
+        databaseService.saveEmployee(employee: newEmployee)
     }
     
     func resetForm() {
         
         firstName = ""
         lastName = ""
-        oib = 1
-        department = ""
+        hours = ""
+        minutes = ""
         uiImage = UIImage(systemName: "person")
     }
-    
-    func uploadImage() {
-       
-    }
+ 
 }

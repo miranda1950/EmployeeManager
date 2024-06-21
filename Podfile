@@ -6,14 +6,16 @@ target 'EmployeeManager' do
   use_frameworks!
 
   # Pods for EmployeeManager
+pod 'Alamofire', '~> 4.8.2'
 
-  target 'EmployeeManagerTests' do
-    inherit! :search_paths
-    pod 'SQLite.swift', '~> 0.14.0'
-  end
-
-  target 'EmployeeManagerUITests' do
-    # Pods for testing
-  end
-
+ post_install do |installer|
+     installer.generated_projects.each do |project|
+         project.targets.each do |target|
+                target.build_configurations.each do |config|
+                    config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+    config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+                  end
+              end
+          end
+      end
 end

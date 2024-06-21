@@ -31,7 +31,6 @@ struct Components: Codable {
    
 }
 
-
 struct UserData: Codable {
     let dateOfBirth: String
     let gender: String
@@ -48,10 +47,3 @@ struct UserData: Codable {
     }
 }
 
-struct Employee: Codable {
-   
-    let name: String
-    let surname: String
-    let sex: String
-    let date: Date
-}
